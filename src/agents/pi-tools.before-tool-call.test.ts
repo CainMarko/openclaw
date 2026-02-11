@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { loadConfig } from "../config/config.js";
 import { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import { toClientToolDefinitions } from "./pi-tool-definition-adapter.js";
 import { wrapToolWithBeforeToolCallHook } from "./pi-tools.before-tool-call.js";
 
 vi.mock("../plugins/hook-runner-global.js");
+vi.mock("../config/config.js", () => ({ loadConfig: vi.fn(() => ({})) }));
 
 const mockGetGlobalHookRunner = vi.mocked(getGlobalHookRunner);
+const mockLoadConfig = vi.mocked(loadConfig);
 
 describe("before_tool_call hook integration", () => {
   let hookRunner: {
@@ -20,6 +23,7 @@ describe("before_tool_call hook integration", () => {
     };
     // oxlint-disable-next-line typescript/no-explicit-any
     mockGetGlobalHookRunner.mockReturnValue(hookRunner as any);
+    mockLoadConfig.mockReturnValue({} as ReturnType<typeof loadConfig>);
   });
 
   it("executes tool normally when no hook is registered", async () => {
@@ -54,6 +58,34 @@ describe("before_tool_call hook integration", () => {
     );
   });
 
+  it("downgrades risky exec calls to ask=always in moderate mode", async () => {
+    hookRunner.hasHooks.mockReturnValue(false);
+    mockLoadConfig.mockReturnValue({
+      gateway: { security: { llmThreatPolicy: { mode: "moderate" } } },
+    } as ReturnType<typeof loadConfig>);
+    const execute = vi.fn().mockResolvedValue({ content: [], details: { ok: true } });
+    // oxlint-disable-next-line typescript/no-explicit-any
+    const tool = wrapToolWithBeforeToolCallHook({ name: "exec", execute } as any, {
+      sessionKey: "main",
+    });
+
+    await tool.execute(
+      "call-risk",
+      { command: "cat ~/.ssh/config", note: "api_key" },
+      undefined,
+      undefined,
+    );
+
+    expect(execute).toHaveBeenCalledWith(
+      "call-risk",
+      expect.objectContaining({
+        command: "cat ~/.ssh/config",
+        ask: "always",
+      }),
+      undefined,
+      undefined,
+    );
+  });
   it("blocks tool execution when hook returns block=true", async () => {
     hookRunner.hasHooks.mockReturnValue(true);
     hookRunner.runBeforeToolCall.mockResolvedValue({
@@ -121,6 +153,7 @@ describe("before_tool_call hook integration for client tools", () => {
     };
     // oxlint-disable-next-line typescript/no-explicit-any
     mockGetGlobalHookRunner.mockReturnValue(hookRunner as any);
+    mockLoadConfig.mockReturnValue({} as ReturnType<typeof loadConfig>);
   });
 
   it("passes modified params to client tool callbacks", async () => {

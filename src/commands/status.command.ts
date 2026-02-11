@@ -79,6 +79,7 @@ export async function statusCommand(
     summary,
     memory,
     memoryPlugin,
+    threatPolicy,
   } = scan;
 
   const securityAudit = await withProgress(
@@ -152,6 +153,7 @@ export async function statusCommand(
           updateChannelSource: channelInfo.source,
           memory,
           memoryPlugin,
+          threatPolicy,
           gateway: {
             mode: gatewayMode,
             url: gatewayConnection.url,
@@ -392,6 +394,7 @@ export async function statusCommand(
     { Item: "Node service", Value: nodeDaemonValue },
     { Item: "Agents", Value: agentsValue },
     { Item: "Memory", Value: memoryValue },
+    { Item: "LLM Threat Policy", Value: threatPolicy.mode },
     { Item: "Probes", Value: probesValue },
     { Item: "Events", Value: eventsValue },
     { Item: "Heartbeat", Value: heartbeatValue },
@@ -427,6 +430,10 @@ export async function statusCommand(
     return parts.join(" · ");
   };
   runtime.log(theme.muted(`Summary: ${fmtSummary(securityAudit.summary)}`));
+  runtime.log(theme.muted(`LLM threat policy mode: ${threatPolicy.mode}`));
+  runtime.log(
+    theme.muted("Blocked tool calls include structured reason codes in gateway/tool logs."),
+  );
   const importantFindings = securityAudit.findings.filter(
     (f) => f.severity === "critical" || f.severity === "warn",
   );

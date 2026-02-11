@@ -63,6 +63,11 @@ export type AgentConfig = {
     prune?: SandboxPruneSettings;
   };
   tools?: AgentToolsConfig;
+  security?: {
+    llmThreatPolicy?: {
+      mode?: "off" | "moderate" | "strict";
+    };
+  };
 };
 
 export type AgentsConfig = {
