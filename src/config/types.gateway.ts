@@ -239,6 +239,11 @@ export type GatewayConfig = {
   tls?: GatewayTlsConfig;
   http?: GatewayHttpConfig;
   nodes?: GatewayNodesConfig;
+  security?: {
+    llmThreatPolicy?: {
+      mode?: "off" | "moderate" | "strict";
+    };
+  };
   /**
    * IPs of trusted reverse proxies (e.g. Traefik, nginx). When a connection
    * arrives from one of these IPs, the Gateway trusts `x-forwarded-for` (or

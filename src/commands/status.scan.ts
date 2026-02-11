@@ -26,6 +26,10 @@ type MemoryPluginStatus = {
   reason?: string;
 };
 
+type ThreatPolicyStatus = {
+  mode: "off" | "moderate" | "strict";
+};
+
 function resolveMemoryPluginStatus(cfg: ReturnType<typeof loadConfig>): MemoryPluginStatus {
   const pluginsEnabled = cfg.plugins?.enabled !== false;
   if (!pluginsEnabled) {
@@ -57,6 +61,7 @@ export type StatusScanResult = {
   summary: Awaited<ReturnType<typeof getStatusSummary>>;
   memory: MemoryStatusSnapshot | null;
   memoryPlugin: MemoryPluginStatus;
+  threatPolicy: ThreatPolicyStatus;
 };
 
 export async function scanStatus(
@@ -150,6 +155,9 @@ export async function scanStatus(
 
       progress.setLabel("Checking memory…");
       const memoryPlugin = resolveMemoryPluginStatus(cfg);
+      const threatPolicy: ThreatPolicyStatus = {
+        mode: cfg.gateway?.security?.llmThreatPolicy?.mode ?? "strict",
+      };
       const memory = await (async (): Promise<MemoryStatusSnapshot | null> => {
         if (!memoryPlugin.enabled) {
           return null;
@@ -197,6 +205,7 @@ export async function scanStatus(
         summary,
         memory,
         memoryPlugin,
+        threatPolicy,
       };
     },
   );

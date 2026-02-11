@@ -471,6 +471,17 @@ export const AgentEntrySchema = z
       .optional(),
     sandbox: AgentSandboxSchema,
     tools: AgentToolsSchema,
+    security: z
+      .object({
+        llmThreatPolicy: z
+          .object({
+            mode: z.enum(["off", "moderate", "strict"]).optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

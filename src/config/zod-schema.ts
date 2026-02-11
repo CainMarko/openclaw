@@ -510,6 +510,17 @@ export const OpenClawSchema = z
           })
           .strict()
           .optional(),
+        security: z
+          .object({
+            llmThreatPolicy: z
+              .object({
+                mode: z.enum(["off", "moderate", "strict"]).optional(),
+              })
+              .strict()
+              .optional(),
+          })
+          .strict()
+          .optional(),
       })
       .strict()
       .optional(),
