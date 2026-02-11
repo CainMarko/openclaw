@@ -49,6 +49,18 @@ Start with the smallest access that still works, then widen it as you gain confi
 
 If you run `--deep`, OpenClaw also attempts a best-effort live Gateway probe.
 
+## Installer supply-chain verification
+
+When installing from `openclaw.ai`, installers should enforce release integrity checks before execution:
+
+1. Fetch signed `manifest.json` (plus `manifest.json.sig` / certificate materials).
+2. Verify manifest signature against OpenClaw's release workflow identity.
+3. Download target artifact.
+4. Verify artifact SHA-256 checksum from the signed manifest.
+5. Abort on any verification failure.
+
+This protects against tampered mirrors, MITM content replacement, and stale or partial artifact caches. The expected installer behavior and failure messages are documented in [Installer internals](/install/installer#release-manifest-verification).
+
 ## Credential storage map
 
 Use this when auditing access or deciding what to back up:

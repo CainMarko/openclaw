@@ -1,0 +1,84 @@
+name: Release manifest signing
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to sign (for example: v2026.2.10)"
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build-sign-manifest:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          if [ -z "$TAG" ]; then
+            echo "Unable to resolve release tag" >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Download release artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          gh release download "${{ steps.tag.outputs.tag }}" --dir release-assets
+
+      - name: Generate manifest.json
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          PUBLISHED_AT="$(gh release view "$TAG" --json publishedAt --jq '.publishedAt')"
+          if [ -z "$PUBLISHED_AT" ] || [ "$PUBLISHED_AT" = "null" ]; then
+            echo "Could not resolve release published timestamp for $TAG" >&2
+            exit 1
+          fi
+          node scripts/generate-release-manifest.mjs \
+            --artifacts-dir release-assets \
+            --version "$VERSION" \
+            --published-at "$PUBLISHED_AT" \
+            --output release-assets/manifest.json
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.10.0
+
+      - name: Sign manifest with GitHub OIDC identity
+        run: |
+          set -euo pipefail
+          cd release-assets
+          cosign sign-blob --yes \
+            --output-signature manifest.json.sig \
+            --output-certificate manifest.json.pem \
+            --bundle manifest.json.bundle \
+            manifest.json
+
+      - name: Upload signed manifest assets
+        run: |
+          set -euo pipefail
+          gh release upload "${{ steps.tag.outputs.tag }}" \
+            release-assets/manifest.json \
+            release-assets/manifest.json.sig \
+            release-assets/manifest.json.pem \
+            release-assets/manifest.json.bundle \
+            --clobber
