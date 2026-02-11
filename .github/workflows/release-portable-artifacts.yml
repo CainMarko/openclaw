@@ -1,0 +1,105 @@
+name: release-portable-artifacts
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Package Linux artifact
+        run: pnpm dist:package:linux
+      - name: Upload Linux release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-linux
+          path: |
+            dist/OpenClaw-*-linux.tar.gz
+            dist/OpenClaw-*-linux.manifest.json
+            dist/OpenClaw-*-linux.sha256
+
+  build-windows:
+    runs-on: blacksmith-4vcpu-windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Package Windows artifact
+        shell: bash
+        run: pnpm dist:package:windows
+      - name: Upload Windows release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-windows
+          path: |
+            dist/OpenClaw-*-windows.zip
+            dist/OpenClaw-*-windows.manifest.json
+            dist/OpenClaw-*-windows.sha256
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Package macOS artifact
+        env:
+          SKIP_NOTARIZE: "1"
+          SKIP_DSYM: "1"
+          SKIP_TSC: "0"
+          SKIP_UI_BUILD: "0"
+          ALLOW_MISSING_TEXTUAL_BUNDLE: "1"
+        run: pnpm dist:package:macos
+      - name: Upload macOS release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-macos
+          path: |
+            dist/OpenClaw-*-macos.zip
+            dist/OpenClaw-*-macos.manifest.json
+            dist/OpenClaw-*-macos.sha256
+
+  publish-release-assets:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: [build-linux, build-windows, build-macos]
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: Publish assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/portable-linux/*
+            release-assets/portable-windows/*
+            release-assets/portable-macos/*
+          fail_on_unmatched_files: true
+          prerelease: ${{ contains(github.ref_name, '-beta.') }}
