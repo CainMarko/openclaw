@@ -25,8 +25,8 @@ For a general overview of onboarding paths, see [Onboarding Overview](/start/onb
 <img src="/assets/macos-onboarding/02-local-networks.jpeg" alt="" />
 </Frame>
 </Step>
-<Step title="Welcome and security notice">
-<Frame caption="Read the security notice displayed and decide accordingly">
+<Step title="Welcome, choose Beginner and Safe mode or Advanced mode">
+<Frame caption="Read the security notice, then keep Beginner and Safe mode (recommended) or explicitly opt into Advanced mode">
 <img src="/assets/macos-onboarding/03-security-notice.png" alt="" />
 </Frame>
 </Step>
@@ -44,10 +44,10 @@ Where does the **Gateway** run?
 - **Configure later:** skip setup and leave the app unconfigured.
 
 <Tip>
-**Gateway auth tip:**
-- The wizard now generates a **token** even for loopback, so local WS clients must authenticate.
-- If you disable auth, any local process can connect; use that only on fully trusted machines.
-- Use a **token** for multi‑machine access or non‑loopback binds.
+**Beginner and Safe mode tip:**
+- Safe mode keeps bind on **loopback** and requires gateway auth by default.
+- Safe mode keeps a restrictive tool policy and asks for approval before high-risk operations.
+- Choose **Advanced mode** only when you want to explicitly relax those guardrails.
 </Tip>
 </Step>
 <Step title="Permissions">

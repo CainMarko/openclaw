@@ -75,6 +75,8 @@ The **installer script** is the recommended way to install OpenClaw. It handles 
         openclaw onboard --install-daemon
         ```
 
+        Beginner-friendly secure defaults are built in. Run `openclaw onboard --flow beginner` to force the safe profile, or `openclaw onboard --flow advanced` to opt out explicitly.
+
         <Accordion title="sharp build errors?">
           If you have libvips installed globally (common on macOS via Homebrew) and `sharp` fails, force prebuilt binaries:
 
@@ -91,6 +93,8 @@ The **installer script** is the recommended way to install OpenClaw. It handles 
         pnpm approve-builds -g        # approve openclaw, node-llama-cpp, sharp, etc.
         openclaw onboard --install-daemon
         ```
+
+        Beginner-friendly secure defaults are built in. Run `openclaw onboard --flow beginner` to force the safe profile, or `openclaw onboard --flow advanced` to opt out explicitly.
 
         <Note>
         pnpm requires explicit approval for packages with build scripts. After the first install shows the "Ignored build scripts" warning, run `pnpm approve-builds -g` and select the listed packages.
@@ -128,6 +132,8 @@ The **installer script** is the recommended way to install OpenClaw. It handles 
         ```bash
         openclaw onboard --install-daemon
         ```
+
+        Default onboarding starts in Beginner and Safe mode (loopback bind, required auth, restrictive tool policy, and approval prompts for high-risk operations). Choose Advanced mode if you explicitly want to opt out.
       </Step>
     </Steps>
 
