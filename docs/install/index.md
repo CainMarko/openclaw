@@ -136,6 +136,16 @@ The **installer script** is the recommended way to install OpenClaw. It handles 
   </Accordion>
 </AccordionGroup>
 
+## Portable release artifacts
+
+For a non-technical "download and run" flow, OpenClaw release tags also publish portable artifacts with a bundled launcher:
+
+- `OpenClaw-<version>-macos.zip` — app bundle plus guided launcher
+- `OpenClaw-<version>-windows.zip` — portable launcher plus onboarding bootstrap
+- `OpenClaw-<version>-linux.tar.gz` — portable launcher plus onboarding bootstrap
+
+See [Installer internals](/install/installer#portable-release-artifacts) for artifact structure and launcher behavior.
+
 ## Other install methods
 
 <CardGroup cols={2}>

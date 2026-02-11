@@ -52,6 +52,21 @@ OpenClaw ships three installer scripts, served from `openclaw.ai`.
   </Tab>
 </Tabs>
 
+## Portable release artifacts
+
+For users that prefer a direct "download + run" path instead of piping an installer script, tagged releases include portable archives:
+
+- `OpenClaw-<version>-macos.zip` — includes `OpenClaw.app` and a guided launcher command file.
+- `OpenClaw-<version>-windows.zip` — includes a portable `openclaw.cmd` launcher and onboarding bootstrap script.
+- `OpenClaw-<version>-linux.tar.gz` — includes a portable `openclaw` launcher and onboarding bootstrap script.
+
+Each artifact is produced from a deterministic packaging flow and published with:
+
+- `<artifact>.manifest.json` (staged file list + per-file digest)
+- `<artifact>.sha256` (archive checksum)
+
+The launchers are designed to run from the extracted folder and point at the bundled runtime files.
+
 <Note>
 If install succeeds but `openclaw` is not found in a new terminal, see [Node.js troubleshooting](/install/node#troubleshooting).
 </Note>
