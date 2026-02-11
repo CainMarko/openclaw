@@ -118,16 +118,24 @@ export async function runOnboardingWizard(
     return;
   }
 
-  const quickstartHint = `Configure details later via ${formatCliCommand("openclaw configure")}.`;
-  const manualHint = "Configure port, network, Tailscale, and auth options.";
+  const quickstartHint = [
+    "Recommended defaults for new users.",
+    "Loopback-only gateway, required auth, restrictive tool policy, and approval prompts for risky actions.",
+  ].join(" ");
+  const manualHint = "Power-user path with full control over gateway and runtime policy settings.";
   const explicitFlowRaw = opts.flow?.trim();
-  const normalizedExplicitFlow = explicitFlowRaw === "manual" ? "advanced" : explicitFlowRaw;
+  const normalizedExplicitFlow =
+    explicitFlowRaw === "beginner"
+      ? "quickstart"
+      : explicitFlowRaw === "manual"
+        ? "advanced"
+        : explicitFlowRaw;
   if (
     normalizedExplicitFlow &&
     normalizedExplicitFlow !== "quickstart" &&
     normalizedExplicitFlow !== "advanced"
   ) {
-    runtime.error("Invalid --flow (use quickstart, manual, or advanced).");
+    runtime.error("Invalid --flow (use beginner, quickstart, manual, or advanced).");
     runtime.exit(1);
     return;
   }
@@ -140,16 +148,20 @@ export async function runOnboardingWizard(
     (await prompter.select({
       message: "Onboarding mode",
       options: [
-        { value: "quickstart", label: "QuickStart", hint: quickstartHint },
-        { value: "advanced", label: "Manual", hint: manualHint },
+        { value: "quickstart", label: "Beginner / Safe mode", hint: quickstartHint },
+        {
+          value: "advanced",
+          label: "Advanced mode",
+          hint: `${manualHint} (explicitly opts out of safe defaults).`,
+        },
       ],
       initialValue: "quickstart",
     }));
 
   if (opts.mode === "remote" && flow === "quickstart") {
     await prompter.note(
-      "QuickStart only supports local gateways. Switching to Manual mode.",
-      "QuickStart",
+      "Beginner / Safe mode supports local gateways only. Switching to Advanced mode.",
+      "Beginner / Safe mode",
     );
     flow = "advanced";
   }
@@ -239,56 +251,19 @@ export async function runOnboardingWizard(
   })();
 
   if (flow === "quickstart") {
-    const formatBind = (value: "loopback" | "lan" | "auto" | "custom" | "tailnet") => {
-      if (value === "loopback") {
-        return "Loopback (127.0.0.1)";
-      }
-      if (value === "lan") {
-        return "LAN";
-      }
-      if (value === "custom") {
-        return "Custom IP";
-      }
-      if (value === "tailnet") {
-        return "Tailnet (Tailscale IP)";
-      }
-      return "Auto";
-    };
-    const formatAuth = (value: GatewayAuthChoice) => {
-      if (value === "token") {
-        return "Token (default)";
-      }
-      return "Password";
-    };
-    const formatTailscale = (value: "off" | "serve" | "funnel") => {
-      if (value === "off") {
-        return "Off";
-      }
-      if (value === "serve") {
-        return "Serve";
-      }
-      return "Funnel";
-    };
-    const quickstartLines = quickstartGateway.hasExisting
-      ? [
-          "Keeping your current gateway settings:",
-          `Gateway port: ${quickstartGateway.port}`,
-          `Gateway bind: ${formatBind(quickstartGateway.bind)}`,
-          ...(quickstartGateway.bind === "custom" && quickstartGateway.customBindHost
-            ? [`Gateway custom IP: ${quickstartGateway.customBindHost}`]
-            : []),
-          `Gateway auth: ${formatAuth(quickstartGateway.authMode)}`,
-          `Tailscale exposure: ${formatTailscale(quickstartGateway.tailscaleMode)}`,
-          "Direct to chat channels.",
-        ]
-      : [
-          `Gateway port: ${DEFAULT_GATEWAY_PORT}`,
-          "Gateway bind: Loopback (127.0.0.1)",
-          "Gateway auth: Token (default)",
-          "Tailscale exposure: Off",
-          "Direct to chat channels.",
-        ];
-    await prompter.note(quickstartLines.join("\n"), "QuickStart");
+    await prompter.note(
+      [
+        "Beginner / Safe mode applies these defaults:",
+        `Gateway port: ${DEFAULT_GATEWAY_PORT}`,
+        "Gateway bind: Loopback (127.0.0.1)",
+        "Gateway auth: Token (required)",
+        "Tailscale exposure: Off",
+        "Tool policy: Restrictive (exec allowlist + deny dangerous node commands)",
+        "High-risk operations: Approval prompts enabled",
+        "Want full control now? Re-run with --flow advanced.",
+      ].join("\n"),
+      "Beginner / Safe mode",
+    );
   }
 
   const localPort = resolveGatewayPort(baseConfig);
@@ -430,6 +405,26 @@ export async function runOnboardingWizard(
   });
   nextConfig = gateway.nextConfig;
   const settings = gateway.settings;
+
+  if (flow === "quickstart") {
+    await prompter.note(
+      [
+        "What is blocked in Beginner / Safe mode (and why):",
+        "",
+        "- Public network access to your gateway is blocked by default.",
+        "  Why: bind=loopback means only this machine can connect unless you explicitly change it.",
+        "- Unauthenticated gateway access is blocked.",
+        "  Why: token auth is required so local or remote clients must prove identity.",
+        "- Dangerous node actions (camera/screen recording and personal-data writes) are blocked.",
+        "  Why: these actions can capture or change sensitive data.",
+        "- Shell exec is restrictive and asks for approval on risky runs.",
+        "  Why: command execution can modify files or expose secrets if abused.",
+        "",
+        "You can opt out explicitly with Advanced mode (openclaw onboard --flow advanced).",
+      ].join("\n"),
+      "Security summary",
+    );
+  }
 
   if (opts.skipChannels ?? opts.skipProviders) {
     await prompter.note("Skipping channel setup.", "Channels");

@@ -61,7 +61,7 @@ export async function configureGatewayForOnboarding(
 
   let bind: GatewayWizardSettings["bind"] =
     flow === "quickstart"
-      ? quickstartGateway.bind
+      ? "loopback"
       : await prompter.select<GatewayWizardSettings["bind"]>({
           message: "Gateway bind",
           options: [
@@ -107,7 +107,7 @@ export async function configureGatewayForOnboarding(
 
   let authMode =
     flow === "quickstart"
-      ? quickstartGateway.authMode
+      ? "token"
       : ((await prompter.select({
           message: "Gateway auth",
           options: [
@@ -123,7 +123,7 @@ export async function configureGatewayForOnboarding(
 
   const tailscaleMode: GatewayWizardSettings["tailscaleMode"] =
     flow === "quickstart"
-      ? quickstartGateway.tailscaleMode
+      ? "off"
       : await prompter.select<GatewayWizardSettings["tailscaleMode"]>({
           message: "Tailscale exposure",
           options: [
@@ -158,7 +158,7 @@ export async function configureGatewayForOnboarding(
     }
   }
 
-  let tailscaleResetOnExit = flow === "quickstart" ? quickstartGateway.tailscaleResetOnExit : false;
+  let tailscaleResetOnExit = false;
   if (tailscaleMode !== "off" && flow !== "quickstart") {
     await prompter.note(
       ["Docs:", "https://docs.openclaw.ai/gateway/tailscale", "https://docs.openclaw.ai/web"].join(
@@ -250,15 +250,45 @@ export async function configureGatewayForOnboarding(
     },
   };
 
-  // If this is a new gateway setup (no existing gateway settings), start with a
-  // denylist for high-risk node commands. Users can arm these temporarily via
-  // /phone arm ... (phone-control plugin).
-  if (
+  // Beginner/Safe mode always applies a restrictive baseline.
+  if (flow === "quickstart") {
+    const existingDenyCommands = nextConfig.gateway?.nodes?.denyCommands ?? [];
+    const denyCommands = Array.from(
+      new Set([...existingDenyCommands, ...DEFAULT_DANGEROUS_NODE_DENY_COMMANDS]),
+    );
+
+    nextConfig = {
+      ...nextConfig,
+      agents: {
+        ...nextConfig.agents,
+        defaults: {
+          ...nextConfig.agents?.defaults,
+          elevatedDefault: "ask",
+        },
+      },
+      tools: {
+        ...nextConfig.tools,
+        exec: {
+          ...nextConfig.tools?.exec,
+          security: "allowlist",
+          ask: "always",
+        },
+      },
+      gateway: {
+        ...nextConfig.gateway,
+        nodes: {
+          ...nextConfig.gateway?.nodes,
+          denyCommands,
+        },
+      },
+    };
+  } else if (
     !quickstartGateway.hasExisting &&
     nextConfig.gateway?.nodes?.denyCommands === undefined &&
     nextConfig.gateway?.nodes?.allowCommands === undefined &&
     nextConfig.gateway?.nodes?.browser === undefined
   ) {
+    // For fresh advanced setups, start with a denylist for high-risk node commands.
     nextConfig = {
       ...nextConfig,
       gateway: {

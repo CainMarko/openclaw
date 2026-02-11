@@ -21,15 +21,17 @@ Interactive onboarding wizard (local or remote Gateway setup).
 
 ```bash
 openclaw onboard
-openclaw onboard --flow quickstart
+openclaw onboard --flow beginner
 openclaw onboard --flow manual
 openclaw onboard --mode remote --remote-url ws://gateway-host:18789
 ```
 
 Flow notes:
 
-- `quickstart`: minimal prompts, auto-generates a gateway token.
+- `beginner`: recommended safe path (alias of `quickstart`). Uses loopback bind, required gateway auth, restrictive tool policy, and approval prompts for high-risk operations.
+- `quickstart`: legacy alias of `beginner`.
 - `manual`: full prompts for port/bind/auth (alias of `advanced`).
+- `advanced`: explicit opt-out from beginner defaults for power users.
 - Fastest first chat: `openclaw dashboard` (Control UI, no channel setup).
 - Custom Provider: connect any OpenAI or Anthropic compatible endpoint,
   including hosted providers not listed. Use Unknown to auto-detect.

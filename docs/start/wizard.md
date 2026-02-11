@@ -16,6 +16,9 @@ and workspace defaults in one guided flow.
 
 ```bash
 openclaw onboard
+# optional: force beginner-safe or advanced mode
+openclaw onboard --flow beginner
+openclaw onboard --flow advanced
 ```
 
 <Info>
@@ -40,21 +43,24 @@ Recommended: set up a Brave Search API key so the agent can use `web_search`
 which stores `tools.web.search.apiKey`. Docs: [Web tools](/tools/web).
 </Tip>
 
-## QuickStart vs Advanced
+## Beginner and Safe mode vs Advanced mode
 
-The wizard starts with **QuickStart** (defaults) vs **Advanced** (full control).
+The wizard starts with **Beginner and Safe mode** (recommended defaults) vs **Advanced mode** (full control).
 
 <Tabs>
-  <Tab title="QuickStart (defaults)">
+  <Tab title="Beginner and Safe mode (recommended)">
     - Local gateway (loopback)
     - Workspace default (or existing workspace)
     - Gateway port **18789**
-    - Gateway auth **Token** (auto‑generated, even on loopback)
+    - Gateway auth **Token** (required, auto‑generated)
     - Tailscale exposure **Off**
+    - Restrictive tool policy: exec runs in allowlist mode and dangerous node commands stay blocked
+    - High-risk operations prompt for approval
     - Telegram + WhatsApp DMs default to **allowlist** (you'll be prompted for your phone number)
   </Tab>
-  <Tab title="Advanced (full control)">
+  <Tab title="Advanced mode (explicit opt-out)">
     - Exposes every step (mode, workspace, gateway, channels, daemon, skills).
+    - Use when you intentionally want to override safe defaults.
   </Tab>
 </Tabs>
 

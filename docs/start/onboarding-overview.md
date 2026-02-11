@@ -17,6 +17,17 @@ and how you prefer to configure providers.
 - **CLI wizard** for macOS, Linux, and Windows (via WSL2).
 - **macOS app** for a guided first run on Apple silicon or Intel Macs.
 
+## Beginner and Safe mode default
+
+Both CLI onboarding and app onboarding start in **Beginner and Safe mode** by default:
+
+- Loopback bind for the local gateway
+- Authenticated gateway (token required)
+- Restrictive tool policy
+- Approval prompts for high-risk operations
+
+Power users can opt out explicitly by choosing **Advanced mode** (or using `--flow advanced` in CLI).
+
 ## CLI onboarding wizard
 
 Run the wizard in a terminal:
